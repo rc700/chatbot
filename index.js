@@ -41,3 +41,15 @@ var bot = new builder.UniversalBot(connector, function(session){
     session.send(msg);
 
 });
+
+//help
+bot.dialog('help', function(session){
+    // Send Message
+    session.endDialog('To talk with the bot just say Hello')
+}).triggerAction({
+    matches : /^help$/,
+    onSelectAction: (session, args, next) => {
+        session.beginDialog(args.action, args);
+    }
+});
+
