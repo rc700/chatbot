@@ -75,6 +75,16 @@ bot.dialog('order_dinner', [
             builder.Prompts.text(session, "What is your room number?")
             
         }
+    },
+    function(session, results){
+        if(results.response){
+            var room_no = results.response
+            var msg = "We will send this to room " + room_no
+            session.dialogData.room_no = room_no;
+            session.send(msg)
+
+        }
+
     }
 
 ]).triggerAction({
