@@ -42,14 +42,66 @@ var bot = new builder.UniversalBot(connector, function(session){
 
 });
 
-//help
+
+var dinnerMenu = {
+    "Soup - £6.00": {
+        Description: "Soup",
+        Price: 6.00
+    },
+    "Steak and Chips - £17.99": {
+        Description: "Steak and Chips",
+        Price: 17.99
+    },
+    "Chocolate Fudge Cake - £4.29": {
+        Description: "Chocolate Fudge Cake",
+        Price: 4.29
+    }
+};
+
+// order dinner
+bot.dialog('order_dinner', [ 
+    function(session){
+    // Send Message
+    session.send("Let's order some dinner!");
+    builder.Prompts.choice(session, "Choose from the following options from our menu", dinnerMenu)
+    },
+    function(session, results){
+        if(results.response){
+            var order = dinnerMenu[results.response.entity];
+            var msg = "You ordered: %(Description)s for a total of $%(Price)f."
+            session.dialogData.order = order;
+            session.send(msg, order)
+
+            builder.Prompts.text(session, "What is your room number?")
+            
+        }
+    }
+
+]).triggerAction({
+    matches : /^order dinner$/i,
+    onSelectAction: (session, args, next) => {
+        session.beginDialog(args.action, args);
+    }
+});
+
+// book reservation
+bot.dialog('dinner_reservation', function(session){
+    // Send Message
+    session.send('When would you like to come for dinner?');
+}).triggerAction({
+    matches : /^make reservation$/i,
+    onSelectAction: (session, args, next) => {
+        session.beginDialog(args.action, args);
+    }
+});
+
+// help
 bot.dialog('help', function(session){
     // Send Message
-    session.endDialog('To talk with the bot just say Hello')
+    session.endDialog('To order dinner say order dinner, to make a reservation say make reservation')
 }).triggerAction({
     matches : /^help$/,
     onSelectAction: (session, args, next) => {
         session.beginDialog(args.action, args);
     }
 });
-
