@@ -81,7 +81,7 @@ bot.dialog('order_dinner', [
             var room_no = results.response
             var msg = "We will send this to room " + room_no
             session.dialogData.room_no = room_no;
-            session.send(msg)
+            session.endConversation(msg)
 
         }
 
@@ -89,10 +89,14 @@ bot.dialog('order_dinner', [
 
 ]).triggerAction({
     matches : /^order dinner$/i,
-    onSelectAction: (session, args, next) => {
-        session.beginDialog(args.action, args);
+})
+.endConversationAction(
+    "endOrderDinner", "Ok. Goodbye.",
+    {
+        matches: /^cancel$|^goodbye$/i,
+        confirmPrompt: "This will cancel your order. Are you sure?"
     }
-});
+);
 
 // book reservation
 bot.dialog('dinner_reservation', function(session){
