@@ -42,80 +42,216 @@ var bot = new builder.UniversalBot(connector, function(session){
 
 });
 
+//Menu
 
 var dinnerMenu = {
-    "Soup - £6.00": {
-        Description: "Soup",
-        Price: 6.00
-    },
-    "Steak and Chips - £17.99": {
-        Description: "Steak and Chips",
-        Price: 17.99
-    },
-    "Chocolate Fudge Cake - £4.29": {
-        Description: "Chocolate Fudge Cake",
-        Price: 4.29
-    }
-};
 
-// order dinner
-bot.dialog('order_dinner', [ 
-    function(session){
-    // Send Message
-    session.send("Let's order some dinner!");
-    builder.Prompts.choice(session, "Choose from the following options from our menu", dinnerMenu)
-    },
-    function(session, results){
-        if(results.response){
-            var order = dinnerMenu[results.response.entity];
-            var msg = "You ordered: %(Description)s for a total of $%(Price)f."
-            session.dialogData.order = order;
-            session.send(msg, order)
+    "Chicken and Chips - £5.00":{
 
-            builder.Prompts.text(session, "What is your room number?")
-            
-        }
-    },
-    function(session, results){
-        if(results.response){
-            var room_no = results.response
-            var msg = "We will send this to room " + room_no
-            session.dialogData.room_no = room_no;
-            session.endConversation(msg)
+        Description: "Chicken and Chips",
 
-        }
+        Price: 5.00
+
+    },
+
+    "Pepperoni Pizza - £9.00":{
+
+        Description: "Pepperoni Pizza",
+
+        Price: 9.00
+
+    },
+
+    "Cheeseburger - £4.00":{
+
+        Description: "Cheeseburger",
+
+        Price: 4.00
 
     }
+
+}
+
+//help
+
+bot.dialog('help', function(session){
+
+    //send message
+
+    session.endDialog('To talk with the bot just say Hello.')
+
+}).triggerAction({
+
+    matches : /^help$/,
+
+    onSelectAction: (session,args,next) => {
+
+        session.beginDialog(args.action,args);
+
+    }
+
+});
+
+bot.dialog('order dinner', [function(session){
+
+    //send message
+
+    session.send('helping you order now.');
+
+    builder.Prompts.choice(session, "Dinner Menu!",dinnerMenu);
+
+}, function(session,results){
+
+    console.log(results)
+
+    if(results.response){
+
+        var order = dinnerMenu[results.response.entity];
+
+        var msg = "You ordered: %(Description)s for a total of £%(Price)f."
+
+        session.dialogData.order = order;
+
+        session.send(msg,order);
+
+        builder.Prompts.text(session, "What is your room number?");
+
+    }
+
+}, function(session,results){
+
+    var roomNum = results.response;
+
+    var msg = "You ordered: %s for a total of £%f to Room %s.";
+
+    session.dialogData.room = roomNum;
+
+    session.endConversation(msg,session.dialogData.order.Description,session.dialogData.order.Price,roomNum);
+
+}
 
 ]).triggerAction({
+
     matches : /^order dinner$/i,
-})
-.endConversationAction(
-    "endOrderDinner", "Ok. Goodbye.",
+
+}).endConversationAction(
+
+    "endOrderDinner","ok. goodbye",
+
     {
+
         matches: /^cancel$|^goodbye$/i,
-        confirmPrompt: "This will cancel your order. Are you sure?"
+
+        confirmPrompt: "This will cancel your order, are you sure?"
+
     }
+
 );
 
-// book reservation
-bot.dialog('dinner_reservation', function(session){
-    // Send Message
-    session.send('When would you like to come for dinner?');
-}).triggerAction({
-    matches : /^make reservation$/i,
-    onSelectAction: (session, args, next) => {
-        session.beginDialog(args.action, args);
-    }
-});
+bot.dialog('dinnerReservation', [
 
-// help
-bot.dialog('help', function(session){
-    // Send Message
-    session.endDialog('To order dinner say order dinner, to make a reservation say make reservation')
-}).triggerAction({
-    matches : /^help$/,
-    onSelectAction: (session, args, next) => {
-        session.beginDialog(args.action, args);
+    function(session){
+
+        session.send('Lets get you a reservation')
+
+        session.beginDialog('askForDateTime')
+
+    }, 
+
+//Save DateTime , ask for party size.
+
+    function(session,results){
+
+        session.dialogData.reservationDate = builder.EntityRecognizer.resolveTime([results.response]);
+
+  
+
+        session.beginDialog('askPartySize');
+
+    },
+
+//Save Party Size, ask for Reserver's name
+
+    function(session,results){
+
+        session.dialogData.PartySize = results.response
+
+        session.beginDialog('resName')
+
+    },
+
+//Save the Reserver's name, print out.
+
+    function(session,results){
+
+        session.dialogData.resName = results.response
+
+        var msg = "You made a booking for <br/>Date/Time: %s </br> Booked by: %s </br> Party of: %s people"
+
+        session.endConversation(msg,
+
+        session.dialogData.reservationDate.toString(),session.dialogData.resName,
+
+        session.dialogData.PartySize)
+
     }
-});
+
+    ]).triggerAction({
+
+        matches : /^dinner reservation$/,
+
+    });
+
+//Date Time
+
+bot.dialog('askForDateTime',[
+
+    function(session){
+
+        builder.Prompts.time(session, "Please provide a reservation time - June 6th to Later");
+
+    },
+
+    function(session,results){
+
+        session.endDialogWithResult(results)
+
+    }
+
+])
+
+//Party Size
+
+bot.dialog('askPartySize',[
+
+    function(session){
+
+        builder.Prompts.text(session,"How many are in the party?")
+
+    }, 
+
+    function(session,results){
+
+        session.endDialogWithResult(results)
+
+    }
+
+])
+
+//Reserver Name
+
+bot.dialog('resName',[
+
+    function(session){
+
+        builder.Prompts.text(session,"What is the reserver's name?");
+
+    },
+
+    function(session,results){
+
+        session.endDialogWithResult(results)
+
+    }
+
+])
